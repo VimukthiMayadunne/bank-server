@@ -30,6 +30,10 @@ public class AccountService {
             throw new IllegalAccountOperationException("Transfer amount must be greater than zero");
         }
 
+        if(fromAccountNumber.equals(toAccountNumber)) {
+            throw new IllegalAccountOperationException("Cannot Transfer between the same account");
+        }
+
         BankAccount fromAccount = bankAccountRepository.getBankAccountByAccountNumber(fromAccountNumber)
                 .orElseThrow(() -> new AccountNotFound("Source account not found"));
 
