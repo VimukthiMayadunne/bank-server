@@ -30,14 +30,12 @@ public class AccountService {
             throw new IllegalAccountOperationException("Transfer amount must be greater than zero");
         }
 
-        // Lock the involved accounts to prevent concurrent issues
-
         BankAccount fromAccount = bankAccountRepository.getBankAccountByAccountNumber(fromAccountNumber)
                 .orElseThrow(() -> new AccountNotFound("Source account not found"));
 
         BankAccount toAccount = bankAccountRepository.getBankAccountByAccountNumber(toAccountNumber)
                 .orElseThrow(() -> new AccountNotFound("Destination account not found"));
-
+        // Lock the involved accounts to prevent concurrent issues
         synchronized (fromAccount) {
             synchronized (toAccount) {
 
