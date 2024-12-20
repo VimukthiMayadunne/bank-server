@@ -2,9 +2,11 @@ package org.dev.shared.bankserver.pojo;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Transient;
 import org.dev.shared.bankserver.util.AccountType;
 
 import java.math.BigDecimal;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 @Entity
@@ -15,6 +17,13 @@ public class BankAccount {
     private AccountType accountType;
     private BigDecimal balance;
     private Long cusId;
+
+    @Transient
+    private final transient ReentrantLock lock = new ReentrantLock();
+
+    public ReentrantLock getLock() {
+        return lock;
+    }
 
     public BankAccount(Long id, String accountNumber, AccountType accountType, BigDecimal balance, Long cusId) {
         this.id = id;
