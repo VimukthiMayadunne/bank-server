@@ -13,7 +13,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -112,5 +116,36 @@ public class AccountServiceTest {
         );
 
         assert (exception.getMessage().contains("Customer id mismatch"));
+    }
+
+    @Test
+    void testConcurrentTransfersNoDeadlock() throws InterruptedException {
+        when(bankAccountRepository.getBankAccountByAccountNumber("ACC_12"))
+                .thenReturn(Optional.of(fromAccount));
+        when(bankAccountRepository.getBankAccountByAccountNumber("ACC_34"))
+                .thenReturn(Optional.of(toAccount));
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+
+        Runnable task1 = () -> accountService.transferMoney("ACC_12", "ACC_34",
+                new BigDecimal("100"), 1001L);
+        Runnable task2 = () -> accountService.transferMoney("ACC_34", "ACC_12",
+                new BigDecimal("100"), 1002L);
+
+        executor.submit(task1);
+        executor.submit(task2);
+        executor.shutdown();
+
+        boolean completed = executor.awaitTermination(10, TimeUnit.SECONDS);
+
+        if (!completed) {
+            throw new AssertionError("Test timed out, possible deadlock detected");
+        }
+
+        BankAccount accountA = bankAccountRepository.getBankAccountByAccountNumber("ACC_12").orElseThrow();
+        BankAccount accountB = bankAccountRepository.getBankAccountByAccountNumber("ACC_34").orElseThrow();
+
+        assertEquals(new BigDecimal("1000"), accountA.getBalance());
+        assertEquals(new BigDecimal("1000"), accountB.getBalance());
     }
 }
