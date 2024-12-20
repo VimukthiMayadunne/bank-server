@@ -18,13 +18,6 @@ public class BankAccount {
     private BigDecimal balance;
     private Long cusId;
 
-    @Transient
-    private final transient ReentrantLock lock = new ReentrantLock();
-
-    public ReentrantLock getLock() {
-        return lock;
-    }
-
     public BankAccount(Long id, String accountNumber, AccountType accountType, BigDecimal balance, Long cusId) {
         this.id = id;
         this.accountNumber = accountNumber;
